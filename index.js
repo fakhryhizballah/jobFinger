@@ -9,17 +9,20 @@ app.use(express.json());
 // Query Params: badgenumbers (comma-separated), month (e.g., 2025-04)
 app.get('/absensi', async (req, res) => {
     try {
-        const { badgenumbers, month } = req.query;
+        const { month } = req.query;
+        let badgenumbers = req.body
+        // console.log(req.body);
 
-        if (!badgenumbers || !month) {
+        if (!month) {
             return res.status(400).json({ message: 'badgenumbers dan month harus diisi' });
         }
 
-        const badgeList = badgenumbers.split(',').map(b => b.trim());
+        // const badgeList = badgenumbers.split(',').map(b => b.trim());
+        // console.log(badgeList);
 
         // Bangun WHERE clause untuk LIKE multiple
-        const badgeLikeClauses = badgeList.map(() => `u.badgenumber LIKE ?`).join(' OR ');
-        const likeValues = badgeList.map(b => `%${b}`);
+        const badgeLikeClauses = badgenumbers.map(() => `u.badgenumber LIKE ?`).join(' OR ');
+        const likeValues = badgenumbers.map(b => `%${b}`);
 
         const sql = `
       SELECT

@@ -44,12 +44,32 @@ app.get('/absensi', async (req, res) => {
 
         const [rows] = await db.query(sql, [...likeValues, month]);
         console.log(rows);
-      return  res.json(rows);
+        const rowsWithConvertedChecktime = rows.map(row => ({
+            ...row,
+            checktime_wib: convertChecktime(row.checktime_wib),
+        }));
+        console.log(rowsWithConvertedChecktime);
+        return res.json(rowsWithConvertedChecktime);
     } catch (err) {
         console.error(err);
       return  res.status(500).json({ message: 'Terjadi kesalahan pada server' });
     }
 });
+
+function convertChecktime(checktime) {
+    const dateObj = new Date(checktime);
+
+    // Ambil tanggal (format: YYYY-MM-DD)
+    const dateOnly = dateObj.toISOString().split('T')[0];
+
+    // Ambil jam (format: HH:mm:ss)
+    const timeOnly = dateObj.toISOString().split('T')[1].split('.')[0];
+
+    return {
+        tanggal: dateOnly,
+        jam: timeOnly
+    };
+}
 
 // Start server
 const PORT = process.env.PORT || 3000;

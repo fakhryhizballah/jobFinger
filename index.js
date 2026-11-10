@@ -55,6 +55,60 @@ app.get('/absensi', async (req, res) => {
       return  res.status(500).json({ message: 'Terjadi kesalahan pada server' });
     }
 });
+app.get('/absensi/lembur', async (req, res) => {
+    try {
+        let { month, badgenumber } = req.query;
+
+
+        if (!month) {
+            return res.status(400).json({ message: 'badgenumbers dan month harus diisi' });
+        }
+        badgenumber = badgenumber.padStart(9, '0'); // badgeNumber.padStart(10, '0')
+
+        // const badgeList = badgenumbers.split(',').map(b => b.trim());
+        // console.log(badgeList);
+
+        // Bangun WHERE clause untuk LIKE multiple
+        // const badgeLikeClauses = badgenumbers.map(() => `u.badgenumber LIKE ?`).join(' OR ');
+        // const likeValues = badgenumbers.map(b => `%${b}`);
+
+        const sql = `
+        SELECT
+        u.badgenumber,
+        u.name,
+        c.userid,
+        c.checktime,
+        DATE_ADD(c.checktime, INTERVAL 7 HOUR) AS checktime_wib,
+        c.checktype,
+       CASE c.checktype
+        WHEN 0 THEN 'masuk'
+        WHEN 1 THEN 'pulang'
+        WHEN 4 THEN 'lembur masuk'
+        WHEN 5 THEN 'lembur pulang'
+        ELSE 'tidak diketahui'
+      END AS checktype_desc,
+        c.SN,
+        i.Alias
+      FROM
+      userinfo u
+      INNER JOIN checkinout c ON u.userid = c.userid
+      LEFT JOIN iclock i ON c.SN = i.SN
+      WHERE u.badgenumber = ? AND c.checktype IN (4,5)
+      AND DATE_FORMAT(c.checktime, '%Y-%m') = ?
+      ORDER BY c.checktime DESC
+      `;
+
+        const [results] = await db.query(sql, [badgenumber, month]);
+        console.log(results);          // For debugging
+        console.log(sql, [badgenumber, month]);
+
+
+        return res.json(results);
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ message: 'Terjadi kesalahan pada server' });
+    }
+});
 
 function convertChecktime(checktime) {
     const dateObj = new Date(checktime);

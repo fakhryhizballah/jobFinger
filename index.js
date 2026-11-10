@@ -99,10 +99,6 @@ app.get('/absensi/lembur', async (req, res) => {
       `;
 
         const [results] = await db.query(sql, [badgenumber, month]);
-        console.log(results);          // For debugging
-        console.log(sql, [badgenumber, month]);
-
-
         return res.json(results);
     } catch (err) {
         console.error(err);
